@@ -1,8 +1,11 @@
+import { UserEntity } from 'src/app/users/entities/user.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 
 @Entity({ name: 'task' })
@@ -15,6 +18,16 @@ export class TaskEntity {
 
   @Column()
   status: boolean;
+
+  @Column()
+  userId: number;
+
+  @ManyToOne(() => UserEntity, (user) => user.tasks, {
+    onDelete: 'CASCADE',
+    cascade: ['insert', 'update'],
+  })
+  @JoinColumn()
+  user: UserEntity;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: string;

@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { UserEntity } from 'src/app/users/entities/user.entity';
 import { Repository } from 'typeorm';
 import { CreateTaskDto } from '../dto/create-task.dto';
 import { UpdateTaskDto } from '../dto/update-task.dto';
@@ -9,11 +10,23 @@ import { TaskEntity } from '../entities/task.entity';
 export class TasksService {
   constructor(
     @InjectRepository(TaskEntity)
-    private readonly taskRepository: Repository<TaskEntity>,
+    private taskRepository: Repository<TaskEntity>,
+    @InjectRepository(UserEntity)
+    private userRepository: Repository<UserEntity>,
   ) {}
 
   async create(createTaskDto: CreateTaskDto): Promise<TaskEntity> {
-    console.log('this.taskRepository', this.taskRepository);
+    // const user = await this.userRepository.findOne({
+    //   where: {
+    //     id: createTaskDto.userId,
+    //   },
+    // });
+
+    // const task = this.taskRepository.create({
+    //   ...createTaskDto,
+    //   user,
+    // });
+
     return await this.taskRepository.save(createTaskDto);
   }
 
@@ -32,11 +45,17 @@ export class TasksService {
   async update(id: number, updateTaskDto: UpdateTaskDto): Promise<TaskEntity> {
     await this.taskRepository.update(id, updateTaskDto);
 
-    return await this.taskRepository.findOne({
+    const updateTask = await this.taskRepository.findOne({
       where: {
         id,
       },
     });
+
+    if (updateTask) {
+      return updateTask;
+    }
+
+    throw new HttpException(`id is not exist`, HttpStatus.NOT_FOUND);
   }
 
   remove(id: number) {

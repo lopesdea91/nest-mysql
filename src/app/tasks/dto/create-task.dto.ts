@@ -6,4 +6,7 @@ export class CreateTaskDto {
 
   @IsBoolean()
   status: boolean;
+
+  @IsNotEmpty()
+  userId: number;
 }
