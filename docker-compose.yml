@@ -1,0 +1,18 @@
+version: '3.5'
+
+services:
+  mysql:
+    image: mysql:5.7
+    container_name: nest-mysql
+    restart: always
+    ports:
+      - 3306:3306 
+    environment:
+      MYSQL_DATABASE: nest
+      MYSQL_USER: nest
+      MYSQL_PASSWORD: nest
+      MYSQL_ROOT_PASSWORD: nest
+    # volumes:
+      # - mysql=/var/lib/mysqlexpose:
+    expose:
+      - '3306'
