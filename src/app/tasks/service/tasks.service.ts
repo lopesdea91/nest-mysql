@@ -1,6 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UserEntity } from 'src/app/users/entities/user.entity';
 import { Repository } from 'typeorm';
 import { CreateTaskDto } from '../dto/create-task.dto';
 import { UpdateTaskDto } from '../dto/update-task.dto';
@@ -11,22 +10,9 @@ export class TasksService {
   constructor(
     @InjectRepository(TaskEntity)
     private taskRepository: Repository<TaskEntity>,
-    @InjectRepository(UserEntity)
-    private userRepository: Repository<UserEntity>,
   ) {}
 
   async create(createTaskDto: CreateTaskDto): Promise<TaskEntity> {
-    // const user = await this.userRepository.findOne({
-    //   where: {
-    //     id: createTaskDto.userId,
-    //   },
-    // });
-
-    // const task = this.taskRepository.create({
-    //   ...createTaskDto,
-    //   user,
-    // });
-
     return await this.taskRepository.save(createTaskDto);
   }
 
@@ -36,31 +22,33 @@ export class TasksService {
 
   async findOne(id: number): Promise<TaskEntity> {
     return await this.taskRepository.findOne({
-      where: {
-        id,
-      },
+      where: { id },
     });
   }
 
   async update(id: number, updateTaskDto: UpdateTaskDto): Promise<TaskEntity> {
-    await this.taskRepository.update(id, updateTaskDto);
+    const where = { id };
 
-    const updateTask = await this.taskRepository.findOne({
-      where: {
-        id,
-      },
-    });
+    const check = await this.taskRepository.count({ where });
 
-    if (updateTask) {
-      return updateTask;
+    if (!check) {
+      throw new HttpException(`id is not exist`, HttpStatus.NOT_FOUND);
     }
 
-    throw new HttpException(`id is not exist`, HttpStatus.NOT_FOUND);
+    await this.taskRepository.update(id, updateTaskDto);
+
+    return await this.taskRepository.findOne({ where });
   }
 
-  remove(id: number) {
-    return this.taskRepository.delete({
-      id,
-    });
+  async remove(id: number) {
+    const where = { id };
+
+    const check = await this.taskRepository.count({ where });
+
+    if (!check) {
+      throw new HttpException(`id is not exist`, HttpStatus.NOT_FOUND);
+    }
+
+    return this.taskRepository.delete({ id });
   }
 }
