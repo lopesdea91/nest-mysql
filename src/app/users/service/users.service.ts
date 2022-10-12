@@ -9,6 +9,8 @@ import { UserRepository } from '../repository/user.repository';
 
 @Injectable()
 export class UsersService {
+  private relationsUser = { tasks: true };
+
   constructor(
     @InjectRepository(UserEntity)
     private readonly userRepository: UserRepository,
@@ -16,48 +18,48 @@ export class UsersService {
     private readonly taskRepository: TaskRepository,
   ) {}
 
-  async create(createUserDto: CreateUserDto) {
+  async ExceptionCheckId(id: number): Promise<void> {
+    const check = await this.userRepository.count({ where: { id } });
+
+    if (!check) {
+      throw new HttpException(`id is not exist`, HttpStatus.NOT_FOUND);
+    }
+  }
+
+  async create(createUserDto: CreateUserDto): Promise<UserEntity> {
     return await this.userRepository.save(createUserDto);
   }
 
-  async findAll() {
+  async findAll(): Promise<UserEntity[]> {
     return await this.userRepository.find({
-      relations: { tasks: true },
+      relations: this.relationsUser,
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: number): Promise<UserEntity> {
+    await this.ExceptionCheckId(id);
+
     return await this.userRepository.findOne({
       where: { id },
-      relations: { tasks: true },
+      relations: this.relationsUser,
     });
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
-    const where = { id };
-
-    const check = await this.userRepository.count({ where });
-
-    if (!check) {
-      throw new HttpException(`id is not exist`, HttpStatus.NOT_FOUND);
-    }
+  async update(id: number, updateUserDto: UpdateUserDto): Promise<UserEntity> {
+    await this.ExceptionCheckId(id);
 
     await this.userRepository.update(id, updateUserDto);
 
-    return await this.userRepository.findOne({ where });
+    return await this.userRepository.findOne({ where: { id } });
   }
 
   async remove(id: number) {
-    const where = { id };
-
-    const check = await this.userRepository.count({ where });
-
-    if (!check) {
-      throw new HttpException(`id is not exist`, HttpStatus.NOT_FOUND);
-    }
+    await this.ExceptionCheckId(id);
 
     await this.taskRepository.delete({ userId: id });
 
-    return await this.userRepository.delete({ id });
+    const relete = await this.userRepository.delete({ id });
+
+    return relete.affected === 1;
   }
 }

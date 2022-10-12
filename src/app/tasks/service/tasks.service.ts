@@ -12,6 +12,14 @@ export class TasksService {
     private taskRepository: Repository<TaskEntity>,
   ) {}
 
+  async ExceptionCheckId(id: number): Promise<void> {
+    const check = await this.taskRepository.count({ where: { id } });
+
+    if (!check) {
+      throw new HttpException(`id is not exist`, HttpStatus.NOT_FOUND);
+    }
+  }
+
   async create(createTaskDto: CreateTaskDto): Promise<TaskEntity> {
     return await this.taskRepository.save(createTaskDto);
   }
@@ -21,33 +29,23 @@ export class TasksService {
   }
 
   async findOne(id: number): Promise<TaskEntity> {
+    await this.ExceptionCheckId(id);
+
     return await this.taskRepository.findOne({
       where: { id },
     });
   }
 
   async update(id: number, updateTaskDto: UpdateTaskDto): Promise<TaskEntity> {
-    const where = { id };
-
-    const check = await this.taskRepository.count({ where });
-
-    if (!check) {
-      throw new HttpException(`id is not exist`, HttpStatus.NOT_FOUND);
-    }
+    await this.ExceptionCheckId(id);
 
     await this.taskRepository.update(id, updateTaskDto);
 
-    return await this.taskRepository.findOne({ where });
+    return await this.taskRepository.findOne({ where: { id } });
   }
 
   async remove(id: number) {
-    const where = { id };
-
-    const check = await this.taskRepository.count({ where });
-
-    if (!check) {
-      throw new HttpException(`id is not exist`, HttpStatus.NOT_FOUND);
-    }
+    await this.ExceptionCheckId(id);
 
     return this.taskRepository.delete({ id });
   }
